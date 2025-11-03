@@ -39,7 +39,7 @@ export function usePropsParser() {
       schema.properties[key] = {
         type: mvtTypeToJsonSchema[value.mvt.type],
         default: value.default,
-        description: value.description,
+        description: value.mvt.description,
         minimum: value.mvt.min,
         maximum: value.mvt.max,
       }
