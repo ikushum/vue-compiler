@@ -11,9 +11,13 @@
     <div class="right-panel">
       <div class="props-panel">
         <h2>Props Schema</h2>
+
         <div class="props-schema">
+          <pre v-if="isCompiling" class="empty-state">
+            Compiling...
+          </pre>
           <!-- Displays extracted props as JSON schema -->
-          <pre v-if="!propsSchema" class="empty-state">
+          <pre v-else-if="!propsSchema" class="empty-state">
             Compile a component to see props schema
           </pre>
           <pre v-else>{{ JSON.stringify(propsSchema, null, 2) }}</pre>
@@ -73,6 +77,7 @@ export default {
     const componentMount = ref(null);
     const propsSchema = ref(null);
     const propValues = ref({});
+    const isCompiling = ref(false);
 
     const propsParser = usePropsParser();
     const componentRenderer = useComponentRenderer({
@@ -128,7 +133,6 @@ export default {
 <\/script>`;
 
     onMounted(() => {
-      // Initialize CodeMirror
       editor = CodeMirror.fromTextArea(editorElement.value, {
         mode: "vue",
         theme: "default",
@@ -141,7 +145,15 @@ export default {
     async function compileComponentHandler() {
       const source = editor.getValue();
 
-      await componentRenderer.renderComponent(source);
+      isCompiling.value = true;
+
+      try {
+        await componentRenderer.renderComponent(source);
+      } catch (error) {
+        componentRenderer.printStatus(error + '<br><br>' + 'Please refresh the page and try again.')
+      }
+
+      isCompiling.value = false;
 
       const { schema, values } = extractProps(source);
       propsSchema.value = schema;
@@ -154,10 +166,7 @@ export default {
       const values = propsParser.getDefaults(props);
       const schema = propsParser.getSchema(props);
 
-      return {
-        schema,
-        values,
-      }
+      return { schema, values }
     }
 
     return {
@@ -165,6 +174,7 @@ export default {
       componentMount,
       propsSchema,
       propValues,
+      isCompiling,
       compileComponent: compileComponentHandler,
     };
   },

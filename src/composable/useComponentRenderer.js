@@ -8,15 +8,18 @@ import indexHtml from '@/web-container/index.html?raw';
 import viteConfig from '@/web-container/vite.config.js?raw';
 import packageJson from '@/web-container/package.json?raw';
 
-
 export function useComponentRenderer({propValues, componentMount}) {
   let webcontainerInstance = null
   
   async function renderComponent (source) {
-    if (!webcontainerInstance) {
-      printStatus('Booting WebContainer...');
-      webcontainerInstance = await WebContainer.boot();
+    if (webcontainerInstance) {
+      updateSource(source);
+      updateProps()
+      return
     }
+
+    printStatus('Booting WebContainer...');
+    webcontainerInstance = await WebContainer.boot();
   
     printStatus('Setting up environment...');
   
@@ -74,11 +77,20 @@ export function useComponentRenderer({propValues, componentMount}) {
     webcontainerInstance.fs.writeFile('src/props.json', JSON.stringify(propValues.value));
   }
 
+  function updateProps() {
+    webcontainerInstance.fs.writeFile('src/props.json', JSON.stringify(propValues.value));
+  }
+
+  function updateSource(source) {
+    webcontainerInstance.fs.writeFile('src/Component.vue', source);
+  }
+
   watch(propValues, () => {
     updateProps();
   }, { deep: true });
 
   return {
     renderComponent,
+    printStatus
   }
 }
