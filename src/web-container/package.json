@@ -1,0 +1,13 @@
+{
+  "name": "vue-component-sandbox",
+  "type": "module",
+  "dependencies": {
+    "vue": "^3.3.4",
+    "vite": "^4.4.9",
+    "@vitejs/plugin-vue": "^4.3.4"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  }
+}
