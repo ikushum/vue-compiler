@@ -14,8 +14,8 @@
         <div class="props-schema">
           <!-- Displays extracted props as JSON schema -->
           <pre v-if="!propsSchema" class="empty-state">
-Compile a component to see props schema</pre
-          >
+            Compile a component to see props schema
+          </pre>
           <pre v-else>{{ JSON.stringify(propsSchema, null, 2) }}</pre>
         </div>
 
@@ -61,15 +61,24 @@ import { ref, onMounted } from "vue";
 import CodeMirror from "codemirror";
 import "codemirror/lib/codemirror.css";
 import "codemirror/mode/vue/vue.js";
-import { WebContainer } from "@webcontainer/api";
+
+import { usePropsParser } from '@/composable/usePropsParser.js';
+import { useComponentRenderer } from '@/composable/useComponentRenderer.js';
 
 export default {
   name: "App",
   setup() {
+
     const editorElement = ref(null);
     const componentMount = ref(null);
     const propsSchema = ref(null);
     const propValues = ref({});
+
+    const propsParser = usePropsParser();
+    const componentRenderer = useComponentRenderer({
+      propValues,
+      componentMount,
+    });
 
     let editor = null;
 
@@ -129,49 +138,26 @@ export default {
       editor.setValue(sampleComponent);
     });
 
-    // TODO 1: Initialize WebContainer and compile Vue SFC
     async function compileComponentHandler() {
       const source = editor.getValue();
-      console.log("Compiling component:", source);
 
-      // Your implementation here
-      // Should:
-      // 1. Initialize WebContainer (if not already initialized)
-      // 2. Compile the Vue SFC to JavaScript
-      // 3. Extract props from the component
-      // 4. Mount the component with the current prop values
+      await componentRenderer.renderComponent(source);
 
-      // Example structure:
-      // const compiled = await compileVueSFC(source)
-      // propsSchema.value = extractProps(source);
-      // await mountComponent(compiled);
+      const { schema, values } = extractProps(source);
+      propsSchema.value = schema;
+      propValues.value = values;
     }
 
-    // TODO 2: Extract props from Vue component and convert to JSON Schema
-    function extractProps(componentSource) {
-      // Your implementation here
-      // Parse the Vue component props and convert them to JSON Schema format
-      //
-      // Example output for the sample component:
-      // {
-      //   $schema: "https://json-schema.org/draft/2020-12/schema",
-      //   type: "object",
-      //   properties: {
-      //     title: {
-      //       type: "string",
-      //       description: "Counter title",
-      //       default: "My Counter",
-      //     },
-      //     startValue: {
-      //       type: "number",
-      //       description: "Starting value",
-      //       default: 0,
-      //       minimum: 0,
-      //       maximum: 100,
-      //     },
-      //   },
-      // }
-      return null;
+    function extractProps(source) {
+      const props = propsParser.extractProps(source);
+
+      const values = propsParser.getDefaults(props);
+      const schema = propsParser.getSchema(props);
+
+      return {
+        schema,
+        values,
+      }
     }
 
     return {
